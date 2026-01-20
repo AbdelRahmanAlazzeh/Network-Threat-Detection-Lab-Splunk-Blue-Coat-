@@ -44,7 +44,7 @@ A practical simulation of a **Security Operations Center (SOC)** workflow. This 
 4.  **Conclusion:** Activity classified as educational/curiosity (Script Kiddie behavior) rather than a sophisticated attack.
 
 **Attack Timeline Visualization:**
-> *![Timeline Chart](screenshots/image_83b9e5.png)*
+> *![Timeline Chart](Screenshot 2026-01-20 040926.png)*
 > *(Stacked chart correlating User, Host, and Action)*
 
 ---
