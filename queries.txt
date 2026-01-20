@@ -1,0 +1,73 @@
+# ---------------------------------------------------------
+# 1. DATA DISCOVERY
+# Purpose: Understand available fields and data structure
+# ---------------------------------------------------------
+index="blue_coat" 
+| fieldsummary 
+| fields field, distinct_count, values
+
+
+# ---------------------------------------------------------
+# 2. OPERATIONAL ANALYSIS - BANDWIDTH USAGE
+# Purpose: Identify "Top Talkers" (users consuming the most data)
+# ---------------------------------------------------------
+index="blue_coat" 
+| stats sum(sc_bytes) as total_bytes by cs_username 
+| eval total_MB = round(total_bytes/1024/1024, 2) 
+| sort - total_MB 
+| head 10
+| table cs_username, total_MB
+
+
+# ---------------------------------------------------------
+# 3. SECURITY ANALYSIS - BLOCKED TRAFFIC
+# Purpose: Identify which hosts are being blocked and why
+# ---------------------------------------------------------
+index="blue_coat" action!="allowed" 
+| stats count by cs_host
+| sort - count
+
+
+# ---------------------------------------------------------
+# 4. TIME SERIES ANALYSIS
+# Purpose: Visualize traffic trends over time (Hourly)
+# ---------------------------------------------------------
+index="blue_coat" 
+| timechart span=1h count by action
+
+
+# ---------------------------------------------------------
+# 5. FORENSIC INVESTIGATION - USER TIMELINE
+# Purpose: Reconstruct the sequence of events for a specific user/host
+# ---------------------------------------------------------
+index="blue_coat" cs_username="Fahad3315"
+| table _time, action, cs_host, category, sc_bytes
+
+
+# ---------------------------------------------------------
+# 6. INVESTIGATION - REFERRER CHECK
+# Purpose: Determine how a user reached a specific blocked site (e.g., via Google Search)
+# ---------------------------------------------------------
+index="blue_coat" action="blocked"
+| table _time, cs_username, cs_host, cs_Referer
+
+
+# ---------------------------------------------------------
+# 7. ADVANCED VISUALIZATION (DASHBOARD)
+# Purpose: Combine Host, Action, and Category into one label for stacked bar charts
+# ---------------------------------------------------------
+index="blue_coat" 
+| eval Graph_Label = cs_host . " [" . action . "] - (" . category . ")"
+| timechart span=1h count by Graph_Label limit=10
+
+
+# ---------------------------------------------------------
+# 8. SESSION DURATION ANALYSIS
+# Purpose: Calculate start and end times for encrypted (TUNNELED) sessions
+# ---------------------------------------------------------
+index="blue_coat" action="TUNNELED"
+| eval duration_sec = time_taken / 1000 
+| eval start_time = _time - duration_sec
+| eval end_time = _time
+| convert ctime(start_time) ctime(end_time)
+| table start_time, end_time, duration_sec, cs_host
